@@ -48,3 +48,18 @@ else:
 # Cleanup and release resources
 appstream.g_object_unref(store)
 appstream.as_cleanup()
+
+
+# Correct the function signature for your library version
+appstream.as_store_load.argtypes = [AsStore, ctypes.c_void_p, ctypes.POINTER(GError)]
+
+# Create a store
+store = appstream.as_store_new()
+
+# Load AppStream data from a file (correct arguments needed here)
+if not appstream.as_store_load(store, None, ctypes.byref(error)):
+    error_msg = error.contents.message.decode('utf-8')
+    print(f"Failed to load AppStream data: {error_msg}")
+    appstream.g_error_free(error)
+    exit(1)
+
