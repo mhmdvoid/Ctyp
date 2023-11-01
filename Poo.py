@@ -1,7 +1,16 @@
 import ctypes
 from ctypes.util import find_library
 
-class AppstreamError(Exception):
+class AsStore(ctypes.Structure):
+    pass
+
+class AsComponent(ctypes.Structure):
+    pass
+
+class AsNode(ctypes.Structure):
+    pass
+
+class GError(ctypes.Structure):
     pass
 
 # Load the appstream-glib library
@@ -15,27 +24,27 @@ store = appstream.as_store_new()
 
 # Load AppStream data from a file
 xml_file = "path/to/appstream.xml"
-error = ctypes.c_void_p()
+error = ctypes.POINTER(GError)()
 if not appstream.as_store_load(store, xml_file, None, ctypes.byref(error)):
-    error_msg = ctypes.cast(error, ctypes.c_char_p).value.decode('utf-8')
-    raise AppstreamError(f"Failed to load AppStream data: {error_msg}")
+    error_msg = error.contents.message.decode('utf-8')
+    print(f"Failed to load AppStream data: {error_msg}")
+    appstream.g_error_free(error)
+    exit(1)
 
-# Get the root node
-root_node = appstream.as_store_get_root(store)
+app_id = "your_app_id"  # Replace with the app ID you're interested in
+app_component = appstream.as_store_lookup_component(store, app_id)
 
-# Iterate through nodes
-node = root_node
-while node:
-    app_id = ctypes.cast(appstream.as_node_get_id(node), ctypes.c_char_p).value.decode('utf-8')
-    icon = ctypes.cast(appstream.as_node_get_icon(node), ctypes.c_char_p).value.decode('utf-8')
-    release = ctypes.cast(appstream.as_node_get_version(node), ctypes.c_char_p).value.decode('utf-8')
+if app_component:
+    # Retrieve the root node for the app
+    root_node = appstream.as_component_get_node(app_component)
 
-    print(f"App ID: {app_id}")
-    print(f"Icon: {icon}")
-    print(f"Release: {release}")
+    # Now, you can work with the root_node and its child nodes as needed.
+    # ...
 
-    node = appstream.as_node_next(node)
+    appstream.g_object_unref(root_node)  # Don't forget to release the reference when done.
+else:
+    print("App not found in AppStream data.")
 
 # Cleanup and release resources
-appstream.as_store_free(store)
+appstream.g_object_unref(store)
 appstream.as_cleanup()
