@@ -1,59 +1,32 @@
-import ctypes
-from ctypes.util import find_library
+import gi
+gi.require_version('AppStream', '1.0')
+from gi.repository import AppStream
 
-class AppstreamError(Exception):
-    pass
+def parse_metadata(metadata_path):
+    context = AppStream.Context()
+    context.set_flags(AppStream.ContextFlags.NONE)
+    context.setup()
 
-class AppstreamComponent:
-    def __init__(self, component):
-        self.component = component
+    metadata = AppStream.Metadata()
+    if context.load_metadata(metadata_path, metadata) != AppStream.ErrorCode.NONE:
+        return None
 
-    def get_id(self):
-        return ctypes.string_at(appstream.as_component_get_id(self.component)).decode('utf-8')
+    app_data = {}
+    for app in metadata.get_apps():
+        app_id = app.get_id()
+        app_data[app_id] = {
+            'id': app_id,
+            'icon': app.get_icon(),
+            'release': app.get_release()
+        }
 
-    def get_icon(self):
-        return ctypes.string_at(appstream.as_component_get_icon(self.component)).decode('utf-8')
+    return app_data
 
-    def get_release(self):
-        return ctypes.string_at(appstream.as_component_get_version(self.component)).decode('utf-8')
+metadata_path = "path_to_metadata.xml"  # Replace with the actual path to your XML metadata file
+parsed_data = parse_metadata(metadata_path)
 
-try:
-    # Load the appstream-glib library
-    appstream = ctypes.CDLL(find_library('appstream-glib'))
-
-    # Initialize the library
-    appstream.as_init()
-
-    # Create a pool
-    pool = appstream.as_pool_new()
-
-    # Load AppStream data from a file
-    xml_file = "path/to/appstream.xml"
-    error = ctypes.POINTER(ctypes.c_void_p)()
-    if not appstream.as_pool_load_file(pool, xml_file, None, ctypes.byref(error)):
-        error_msg = ctypes.string_at(error.contents).decode('utf-8')
-        raise AppstreamError(f"Failed to load AppStream data: {error_msg}")
-
-    # Get the list of components
-    components = appstream.as_pool_get_components(pool)
-
-    for iter in iter(components):
-        component = AppstreamComponent(iter.contents)
-
-        # Access information
-        app_id = component.get_id()
-        icon = component.get_icon()
-        release = component.get_release()
-
+if parsed_data:
+    for app_id, app_details in parsed_data.items():
         print(f"App ID: {app_id}")
-        print(f"Icon: {icon}")
-        print(f"Release: {release}")
-
-finally:
-    # Cleanup and release resources
-    appstream.as_pool_free(pool)
-    appstream.as_cleanup()
-
-						 const gchar	*path,
-						 GCancellable	*cancellable,
-						 GError		**error);
+        print(f"App Icon: {app_details['icon']}")
+        print(f"App Release: {app_details['release']}")
