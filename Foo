@@ -1,27 +1,39 @@
+import tkinter as tk
 import re
 
-def check_regex_conditions(regex, input_string):
-    pattern = re.compile(regex)
+def validate_input(event):
+    input_string = input_field.get()
 
     condition_results = {
-        group_name: bool(pattern.search(input_string))
-        for group_name, _ in re.findall(r'\(\?P<([^>]+)>', regex)
+        'Minimum Length': len(input_string) >= 8,
+        'Digit': bool(re.search(r'\d', input_string)),
+        'Uppercase': bool(re.search(r'[A-Z]', input_string)),
+        'Lowercase': bool(re.search(r'[a-z]', input_string))
     }
 
-    return condition_results
-
-# Example usage
-regex = r'^(?=.*\d)(?=.*[A-Z])(?=.*[a-z]).{8,}$'
-
-user_input = input("Enter your input: ")
-
-results = check_regex_conditions(regex, user_input)
-
-if results:
-    for condition, matched in results.items():
+    validation_result.config(state=tk.NORMAL)
+    validation_result.delete(1.0, tk.END)
+    for condition, matched in condition_results.items():
         if matched:
-            print(f"Condition '{condition}' is matched.")
+            validation_result.insert(tk.END, f"Condition '{condition}' is matched.\n")
         else:
-            print(f"Condition '{condition}' is not matched.")
-else:
-    print("No conditions matched.")
+            validation_result.insert(tk.END, f"Condition '{condition}' is not matched.\n")
+    validation_result.config(state=tk.DISABLED)
+
+# Create the GUI window
+window = tk.Tk()
+
+# Create the input field
+input_field = tk.Entry(window)
+input_field.pack()
+
+# Create the validation result label
+validation_result = tk.Text(window, height=4, width=30)
+validation_result.pack()
+validation_result.config(state=tk.DISABLED)
+
+# Bind the validate_input function to the input field's key release event
+input_field.bind("<KeyRelease>", validate_input)
+
+# Start the GUI event loop
+window.mainloop()
