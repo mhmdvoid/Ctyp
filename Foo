@@ -2,19 +2,16 @@ import re
 
 def check_regex_conditions(regex, input_string):
     pattern = re.compile(regex)
-    match = pattern.match(input_string)
     
-    if match:
-        condition_results = {
-            group_name: bool(value)
-            for group_name, value in match.groupdict().items()
-        }
-        return condition_results
-    else:
-        return None
+    condition_results = {
+        group_name: bool(pattern.search(input_string))
+        for group_name in pattern.groupindex.keys()
+    }
+    
+    return condition_results
 
 # Example usage
-regex = r'^(?P<digit>\d)?(?P<upper>[A-Z])?(?P<lower>[a-z])?.{8,}$'
+regex = r'^(?:(?P<digit>\d)|(?P<upper>[A-Z])|(?P<lower>[a-z])|.{8,})$'
 input_string = '1'
 
 results = check_regex_conditions(regex, input_string)
