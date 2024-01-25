@@ -2,19 +2,20 @@ import re
 
 def check_regex_conditions(regex, input_string):
     pattern = re.compile(regex)
-    
+
     condition_results = {
         group_name: bool(pattern.search(input_string))
-        for group_name in pattern.groupindex.keys()
+        for group_name, _ in re.findall(r'\(\?P<([^>]+)>', regex)
     }
-    
+
     return condition_results
 
 # Example usage
-regex = r'^(?:(?P<digit>\d)|(?P<upper>[A-Z])|(?P<lower>[a-z])|.{8,})$'
-input_string = '1'
+regex = r'^(?=.*\d)(?=.*[A-Z])(?=.*[a-z]).{8,}$'
 
-results = check_regex_conditions(regex, input_string)
+user_input = input("Enter your input: ")
+
+results = check_regex_conditions(regex, user_input)
 
 if results:
     for condition, matched in results.items():
